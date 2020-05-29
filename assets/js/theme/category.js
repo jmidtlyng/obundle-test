@@ -4,6 +4,25 @@ import compareProducts from './global/compare-products';
 import FacetedSearch from './common/faceted-search';
 import CartService from './common/services/cart';
 
+var $el_testBanner = $('#testAddThree'),
+    promoItems = {
+        "lineItems":[
+            {
+                "productId": 93,
+                "variantId": 54,
+                "quantity": 1
+            },
+            {
+                "productId": 86,
+                "quantity": 1,
+            },
+            {
+                "productId": 88,
+                "quantity": 1,
+            }
+        ]
+      };
+
 export default class Category extends CatalogPage {
     onReady() {
         compareProducts(this.context.urls);
@@ -15,7 +34,7 @@ export default class Category extends CatalogPage {
             hooks.on('sortBy-submitted', this.onSortBySubmit);
         }
 
-        $('#testAddThree').bind('click', this.testBannerAddToCart);
+        $el_testBanner.bind('click', this.testBannerAddToCart);
     }
 
     initFacetedSearch() {
@@ -51,24 +70,26 @@ export default class Category extends CatalogPage {
     }
 
     testBannerAddToCart(){
-      var promoItems = {
-        "lineItems":[
-            {
-                "productId": 93,
-                "variantId": 54,
-                "quantity": 1
-            },
-            {
-                "productId": 86,
-                "quantity": 1,
-            },
-            {
-                "productId": 88,
-                "quantity": 1,
-            }
-        ]
-      };
-      //CartService.getCart().then(data=>console.log(data));
-      CartService.easyAddToCart(promoItems).then(data=>console.log(data));
+      $el_testBanner.html("Adding to cart. Click again to add 3 more.");
+
+      CartService.easyAddToCart(promoItems)
+          .then((cartData)=>{
+              var newQty = 0;
+
+              for(var itemType of Object.keys(cartData.lineItems)){
+                  for(var i = 0; i < cartData.lineItems[itemType].length; i++){
+                      newQty += cartData.lineItems[itemType][i].quantity;
+                  }
+              }
+
+              $('body').trigger("cart-quantity-update", newQty);
+
+              setTimeout(()=>{
+                  $el_testBanner.html("Added to cart. Click again to add 3 more.")
+              }, 2000);
+          })
+          .catch(()=>{
+              $el_testBanner.html("Error: did not add to cart. Please contact support.");
+          });
     }
 }
